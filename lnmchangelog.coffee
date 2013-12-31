@@ -21,16 +21,19 @@ for file in files
   repo = git.repo path.join(p3, '.git')
   console.log p3, repo
 
+  # based off https://github.com/creationix/git-node/blob/master/examples/walk.js
   repo.logWalk 'HEAD', (err, log) ->
     throw err if err
 
     onRead = (err, commit) ->
       throw err if err
+      return if !commit
+      logCommit(commit)
       repo.treeWalk commit.tree, (err, tree) ->
         throw err if err
         onEntry = (err, entry) ->
           throw err if err
-          log.read(onRead) if !entry
+          return log.read(onRead) if !entry
           logEntry(entry)
           return tree.read(onEntry)
 
@@ -43,3 +46,7 @@ for file in files
 logEntry = (entry) ->
   return if not entry?
   console.log entry.hash, entry.path
+
+logCommit = (commit) ->
+  console.log commit.author, commit.message
+
