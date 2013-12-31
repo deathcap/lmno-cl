@@ -2,7 +2,6 @@
 fs = require 'fs'
 path = require 'path'
 git = require 'git-node'
-shellescape = require 'shell-escape'
 
 root = '.'
 
@@ -61,11 +60,9 @@ main = () ->
 
       logRepoGroup = mostCommonGroup # TODO: get from 'git remote -v' instead?
       msg = addCommitLog(logRepoGroup, commitLogs)
-      cmd = ['git', 'commit', 'package.json', '-m', msg]
-      escaped = shellescape(cmd)
 
-      # print shell command for user to execute to commit
-      console.log escaped
+      # run this through: git commit package.json -F -
+      console.log msg
 
 updatePackageJson = (cutCommits, rawPackageJson, commitLogs, newestCommits) ->
   for projectName, newestCommit of newestCommits
