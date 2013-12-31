@@ -34,7 +34,6 @@ for file in files
         onEntry = (err, entry) ->
           throw err if err
           return log.read(onRead) if !entry
-          logEntry(entry)
           return tree.read(onEntry)
 
         tree.read(onEntry)
@@ -43,10 +42,6 @@ for file in files
 
   break
 
-logEntry = (entry) ->
-  return if not entry?
-  console.log entry.hash, entry.path
-
 logCommit = (commit) ->
-  console.log commit.author, commit.message
+  console.log commit.hash, commit.author.name, commit.message
 
