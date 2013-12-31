@@ -234,7 +234,7 @@
     var ret;
     ret = [];
     a.forEach(function(s) {
-      var i, _i, _len;
+      var i, needsQuoting, _i, _len;
       for (_i = 0, _len = escapechars.length; _i < _len; _i++) {
         i = escapechars[_i];
         if (s.indexOf(escapechars[i]) > -1) {
@@ -243,6 +243,10 @@
         }
       }
       s = s.replace(/\\\'/g, '\'"\'"\'');
+      needsQuoting = s.indexOf(' ') !== -1 || s.indexOf('\n') !== -1;
+      if (needsQuoting) {
+        s = "'" + s + "'";
+      }
       return ret.push(s);
     });
     return ret.join(' ');

@@ -218,6 +218,11 @@ shellescape = (a) ->
     # escaping ' doesn't work, replace with ''"'"'
     s = s.replace(/\\\'/g, '\'"\'"\'')
 
+    needsQuoting = s.indexOf(' ') != -1 || s.indexOf('\n') != -1
+    
+    if needsQuoting
+      s = "'#{s}'"
+
     ret.push(s)
 
   ret.join(' ')
