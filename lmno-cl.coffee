@@ -2,6 +2,7 @@
 fs = require 'fs'
 path = require 'path'
 git = require 'git-node'
+util = require 'util'
 
 root = '.'
 
@@ -62,7 +63,9 @@ main = () ->
       msg = addCommitLog(logRepoGroup, commitLogs)
 
       # run this through: git commit package.json -F -
-      console.log msg
+      cmd = ['git', 'commit', 'package.json', '-m', msg]
+      escaped = shellescape(cmd)
+      console.log escaped
 
 updatePackageJson = (cutCommits, rawPackageJson, commitLogs, newestCommits) ->
   for projectName, newestCommit of newestCommits
@@ -190,6 +193,35 @@ readRepo = (commitLogs, newestCommits, cutCommit, projectName, gitPath, isLast, 
 
 logCommit = (commitLogs, projectName, commit) ->
   commitLogs[projectName].push [projectName, commit]
+
+# escaping code based on https://github.com/bahamas10/node-shell-escape
+
+# dangerous characters to the shell,
+# see http://mywiki.wooledge.org/BashGuide/SpecialCharacters
+escapechars = [
+  ' ', ';', '&', '#', '>', '<', '{', '}', '$', '(', 
+  ')', '[', ']', '\'', '"', '|', '*', '!', '^', '?',
+  '+', '~', '`'
+]
+
+# return a shell compatible format
+shellescape = (a) ->
+  ret = []
+
+  a.forEach (s) ->
+    # quote troublesome characters
+    for i in escapechars
+      if s.indexOf(escapechars[i]) > -1
+        s = util.inspect(s)
+        break
+
+    # escaping ' doesn't work, replace with ''"'"'
+    s = s.replace(/\\\'/g, '\'"\'"\'')
+
+    ret.push(s)
+
+  ret.join(' ')
+
 
 
 main()
