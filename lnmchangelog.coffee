@@ -6,12 +6,12 @@ git = require 'git-node'
 root = '../voxpopuli'
 remoteRepoGroup = 'deathcap'
 
-node_modules = path.join(root, 'node_modules')
-
 main = () ->
-  files = fs.readdirSync(node_modules)
-  console.log files
-  for file in files
+  node_modules = path.join(root, 'node_modules')
+  linkedPaths = []
+
+  # find 'npm link' modules
+  for file in fs.readdirSync(node_modules)
     p1 = path.join(node_modules, file)    # project link
     stats = fs.lstatSync(p1)
     if not stats.isSymbolicLink()
@@ -20,22 +20,35 @@ main = () ->
     p2 = fs.readlinkSync(p1)              # /usr/local/lib/node_modules link
     p3 = fs.readlinkSync(p2)              # final destination link
 
-    projectName = path.basename(p3)
+    linkedPaths.push(p3)
 
-    readRepo projectName, p3
+  #theEnd = linkedPaths.slice(-1)[0]
+  theEnd = linkedPaths[0]
+  for file in linkedPaths
+    projectName = path.basename(file)
+
+    readRepo projectName, file, theEnd, (collectedCommitLogs) ->
+      console.log collectedCommitLogs
+
     break
 
-readRepo = (projectName, p3) ->
-  repo = git.repo path.join(p3, '.git')
+readRepo = (projectName, gitPath, theEnd, callback) ->
+  repo = git.repo path.join(gitPath, '.git')
 
-  # based off https://github.com/creationix/git-node/blob/master/examples/walk.js
+  collectedCommitLogs = {}
+
+  # see https://github.com/creationix/git-node/blob/master/examples/walk.js
   repo.logWalk 'HEAD', (err, log) ->
     throw err if err
 
     onRead = (err, commit) ->
       throw err if err
-      return if !commit
-      logCommit(projectName, commit)
+      if !commit
+        # end of commits for this project
+        if gitPath == theEnd
+          callback(collectedCommitLogs)
+        return
+      logCommit(collectedCommitLogs, projectName, commit)
       repo.treeWalk commit.tree, (err, tree) ->
         throw err if err
         onEntry = (err, entry) ->
@@ -48,8 +61,11 @@ readRepo = (projectName, p3) ->
     return log.read onRead
 
 
-logCommit = (projectName, commit) ->
-  console.log "#{remoteRepoGroup}/#{projectName}@#{commit.hash} #{firstLine commit.message}"
+logCommit = (collectedCommitLogs, projectName, commit) ->
+  collectedCommitLogs[projectName] ?= []
+
+  message = "#{remoteRepoGroup}/#{projectName}@#{commit.hash} #{firstLine commit.message}"
+  collectedCommitLogs[projectName].push(message)
 
 firstLine = (s) ->
   s.split('\n')[0]
