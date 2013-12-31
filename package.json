@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "git": "~0.1.5",
-    "git-node": "~0.1.1"
+    "git-node": "~0.1.1",
+    "shell-escape": "0.0.1"
   }
 }
