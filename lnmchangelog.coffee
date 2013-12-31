@@ -1,8 +1,7 @@
 
 fs = require 'fs'
 path = require 'path'
-exec = require 'exec'
-
+git = require 'git'
 
 root = '../voxpopuli'
 
@@ -18,9 +17,9 @@ for file in files
 
   p2 = fs.readlinkSync(p1)              # /usr/local/lib/node_modules link
   p3 = fs.readlinkSync(p2)              # final destination link
-  console.log p3
+  
+  repo = new git.Git(p3)
+  console.log p3, repo
 
-  exec ['ls', '-l', p3], (err, out, code) ->
-    throw err if err
-    console.log out
-    console.log code
+  repo.rev_list {}, 'master', (err, result) ->
+    console.log err,result
