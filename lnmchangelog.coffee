@@ -22,20 +22,17 @@ main = () ->
 
     linkedPaths.push(p3)
 
-  #theEnd = linkedPaths.slice(-1)[0]
-  theEnd = linkedPaths[0]
+  theEnd = linkedPaths.slice(-1)[0]
+  commitLogs = {}
   for file in linkedPaths
     projectName = path.basename(file)
 
-    readRepo projectName, file, theEnd, (collectedCommitLogs) ->
-      console.log collectedCommitLogs
+    readRepo commitLogs, projectName, file, theEnd, (commitLogs) ->
+      console.log commitLogs
 
-    break
 
-readRepo = (projectName, gitPath, theEnd, callback) ->
+readRepo = (commitLogs, projectName, gitPath, theEnd, callback) ->
   repo = git.repo path.join(gitPath, '.git')
-
-  collectedCommitLogs = {}
 
   # see https://github.com/creationix/git-node/blob/master/examples/walk.js
   repo.logWalk 'HEAD', (err, log) ->
@@ -46,13 +43,13 @@ readRepo = (projectName, gitPath, theEnd, callback) ->
       if !commit
         # end of commits for this project
         if gitPath == theEnd
-          callback(collectedCommitLogs)
+          callback(commitLogs)
         return
-      logCommit(collectedCommitLogs, projectName, commit)
+      logCommit(commitLogs, projectName, commit)
       repo.treeWalk commit.tree, (err, tree) ->
         throw err if err
         onEntry = (err, entry) ->
-          throw err if err
+          #throw err if err # ignore because of ENOENT voxel-engine/.git/objects/76/add878f8dd778c3381fb3da45c8140db7db510
           return log.read(onRead) if !entry
           return tree.read(onEntry)
 
@@ -61,11 +58,11 @@ readRepo = (projectName, gitPath, theEnd, callback) ->
     return log.read onRead
 
 
-logCommit = (collectedCommitLogs, projectName, commit) ->
-  collectedCommitLogs[projectName] ?= []
+logCommit = (commitLogs, projectName, commit) ->
+  commitLogs[projectName] ?= []
 
   message = "#{remoteRepoGroup}/#{projectName}@#{commit.hash} #{firstLine commit.message}"
-  collectedCommitLogs[projectName].push(message)
+  commitLogs[projectName].push(message)
 
 firstLine = (s) ->
   s.split('\n')[0]
