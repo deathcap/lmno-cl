@@ -15,7 +15,7 @@
   remoteRepoGroup = 'deathcap';
 
   main = function() {
-    var commitLogs, cutCommit, cutCommits, file, linkedPaths, node_modules, p1, p2, p3, projectName, stats, theEnd, _i, _j, _len, _len1, _ref, _results;
+    var commitLogs, cutCommit, cutCommits, file, linkedPaths, node_modules, numProjects, p1, p2, p3, projectName, stats, _i, _j, _len, _len1, _ref, _results;
     cutCommits = getPackageJsonCommits();
     node_modules = path.join(root, 'node_modules');
     linkedPaths = [];
@@ -31,7 +31,9 @@
       p3 = fs.readlinkSync(p2);
       linkedPaths.push(p3);
     }
-    theEnd = linkedPaths.slice(-1)[0];
+    numProjects = linkedPaths.length;
+    console.log('numProjects', numProjects);
+    console.log('linkedPaths', linkedPaths);
     commitLogs = {};
     _results = [];
     for (_j = 0, _len1 = linkedPaths.length; _j < _len1; _j++) {
@@ -41,8 +43,10 @@
       if (cutCommit == null) {
         throw "node module " + projectName + " linked but not found in package.json!";
       }
-      _results.push(readRepo(commitLogs, cutCommit, projectName, file, theEnd, function(commitLogs) {
-        return console.log(commitLogs);
+      _results.push(readRepo(commitLogs, cutCommit, projectName, file, numProjects, function(commitLogs) {
+        console.log("=======");
+        console.log(commitLogs);
+        return console.log("=======");
       }));
     }
     return _results;
@@ -79,9 +83,10 @@
     return usedCommits;
   };
 
-  readRepo = function(commitLogs, cutCommit, projectName, gitPath, theEnd, callback) {
+  readRepo = function(commitLogs, cutCommit, projectName, gitPath, numProjects, callback) {
     var repo;
     repo = git.repo(path.join(gitPath, '.git'));
+    commitLogs[projectName] = [];
     return repo.logWalk('HEAD', function(err, log) {
       var onRead;
       if (err) {
@@ -92,7 +97,7 @@
           throw err;
         }
         if (!commit || commit.hash === cutCommit) {
-          if (gitPath === theEnd) {
+          if (Object.keys(commitLogs).length === numProjects) {
             callback(commitLogs);
           }
           return;
@@ -118,9 +123,9 @@
 
   logCommit = function(commitLogs, projectName, commit) {
     var firstLine, message;
-    if (commitLogs[projectName] == null) {
-      commitLogs[projectName] = [];
-    }
+    console.log('----');
+    console.log(commitLogs);
+    console.log('----');
     firstLine = function(s) {
       return s.split('\n')[0];
     };

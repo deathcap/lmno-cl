@@ -27,7 +27,9 @@ main = () ->
 
     linkedPaths.push(p3)
 
-  theEnd = linkedPaths.slice(-1)[0]
+  numProjects = linkedPaths.length
+  console.log 'numProjects',numProjects
+  console.log 'linkedPaths',linkedPaths
   commitLogs = {}
   for file in linkedPaths
     projectName = path.basename(file)
@@ -36,8 +38,10 @@ main = () ->
     if !cutCommit?
       throw "node module #{projectName} linked but not found in package.json!"
 
-    readRepo commitLogs, cutCommit, projectName, file, theEnd, (commitLogs) ->
+    readRepo commitLogs, cutCommit, projectName, file, numProjects, (commitLogs) ->
+      console.log "======="
       console.log commitLogs
+      console.log "======="
 
 
 getPackageJsonCommits = () ->
@@ -67,8 +71,10 @@ getPackageJsonCommits = () ->
   return usedCommits
 
 
-readRepo = (commitLogs, cutCommit, projectName, gitPath, theEnd, callback) ->
+readRepo = (commitLogs, cutCommit, projectName, gitPath, numProjects, callback) ->
   repo = git.repo path.join(gitPath, '.git')
+
+  commitLogs[projectName] = []
 
   # see https://github.com/creationix/git-node/blob/master/examples/walk.js
   repo.logWalk 'HEAD', (err, log) ->
@@ -79,7 +85,9 @@ readRepo = (commitLogs, cutCommit, projectName, gitPath, theEnd, callback) ->
 
       if !commit or commit.hash == cutCommit
         # end of commits for this project
-        if gitPath == theEnd
+        
+        # last project, commit logs all completed, so can continue processing
+        if Object.keys(commitLogs).length == numProjects
           callback(commitLogs)
         return
 
@@ -97,7 +105,9 @@ readRepo = (commitLogs, cutCommit, projectName, gitPath, theEnd, callback) ->
 
 
 logCommit = (commitLogs, projectName, commit) ->
-  commitLogs[projectName] ?= []
+  console.log '----'
+  console.log commitLogs
+  console.log '----'
 
   firstLine = (s) ->
     s.split('\n')[0]
