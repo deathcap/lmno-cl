@@ -228,7 +228,7 @@
     return commitLogs[projectName].push([projectName, commit]);
   };
 
-  escapechars = [' ', ';', '&', '#', '>', '<', '{', '}', '$', '(', ')', '[', ']', '\'', '"', '|', '*', '!', '^', '?', '+', '~', '`'];
+  escapechars = [' ', ';', '&', '#', '>', '<', '{', '}', '$', '(', ')', '[', ']', '"', '|', '*', '!', '^', '?', '+', '~', '`'];
 
   shellescape = function(a) {
     var ret;
@@ -242,7 +242,7 @@
           break;
         }
       }
-      s = s.replace(/\\\'/g, '\'"\'"\'');
+      s = s.replace(/'/g, '\'"\'"\'');
       needsQuoting = s.indexOf(' ') !== -1 || s.indexOf('\n') !== -1;
       if (needsQuoting) {
         s = "'" + s + "'";

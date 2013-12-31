@@ -200,7 +200,7 @@ logCommit = (commitLogs, projectName, commit) ->
 # see http://mywiki.wooledge.org/BashGuide/SpecialCharacters
 escapechars = [
   ' ', ';', '&', '#', '>', '<', '{', '}', '$', '(', 
-  ')', '[', ']', '\'', '"', '|', '*', '!', '^', '?',
+  ')', '[', ']', '"', '|', '*', '!', '^', '?',
   '+', '~', '`'
 ]
 
@@ -215,8 +215,8 @@ shellescape = (a) ->
         s = util.inspect(s)
         break
 
-    # escaping ' doesn't work, replace with ''"'"'
-    s = s.replace(/\\\'/g, '\'"\'"\'')
+    # escaping ' doesn't work, replace with '"'"'
+    s = s.replace(/'/g, '\'"\'"\'')
 
     needsQuoting = s.indexOf(' ') != -1 || s.indexOf('\n') != -1
     
@@ -226,7 +226,6 @@ shellescape = (a) ->
     ret.push(s)
 
   ret.join(' ')
-
 
 
 main()
