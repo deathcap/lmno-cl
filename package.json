@@ -1,0 +1,12 @@
+{
+  "name": "lnmchangelog",
+  "description": "utility for generating change logs for linked node modules using git",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:deathcap/lnmchangelog.git"
+  },
+  "dependencies": {
+    "exec": "0.0.6"
+  }
+}

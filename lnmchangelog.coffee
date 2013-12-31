@@ -1,6 +1,8 @@
 
 fs = require 'fs'
 path = require 'path'
+exec = require 'exec'
+
 
 root = '../voxpopuli'
 
@@ -18,3 +20,7 @@ for file in files
   p3 = fs.readlinkSync(p2)              # final destination link
   console.log p3
 
+  exec ['ls', '-l', p3], (err, out, code) ->
+    throw err if err
+    console.log out
+    console.log code
