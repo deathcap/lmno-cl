@@ -31,6 +31,7 @@ main = () ->
   console.log 'numProjects',numProjects
   console.log 'linkedPaths',linkedPaths
   commitLogs = {}
+  newestCommits = {}
   for file in linkedPaths
     projectName = path.basename(file)
 
@@ -38,10 +39,11 @@ main = () ->
     if !cutCommit?
       throw "node module #{projectName} linked but not found in package.json!"
 
-    readRepo commitLogs, cutCommit, projectName, file, numProjects, (commitLogs) ->
+    readRepo commitLogs, newestCommits, cutCommit, projectName, file, numProjects, (commitLogs) ->
       console.log "======="
       console.log commitLogs
       console.log "======="
+      console.log newestCommits
 
 
 getPackageJsonCommits = () ->
@@ -71,7 +73,7 @@ getPackageJsonCommits = () ->
   return usedCommits
 
 
-readRepo = (commitLogs, cutCommit, projectName, gitPath, numProjects, callback) ->
+readRepo = (commitLogs, newestCommits, cutCommit, projectName, gitPath, numProjects, callback) ->
   repo = git.repo path.join(gitPath, '.git')
 
   commitLogs[projectName] = []
@@ -82,6 +84,9 @@ readRepo = (commitLogs, cutCommit, projectName, gitPath, numProjects, callback) 
 
     onRead = (err, commit) ->
       throw err if err
+
+      if commit
+        newestCommits[projectName] ?= commit.hash
 
       if !commit or commit.hash == cutCommit
         # end of commits for this project
@@ -105,10 +110,6 @@ readRepo = (commitLogs, cutCommit, projectName, gitPath, numProjects, callback) 
 
 
 logCommit = (commitLogs, projectName, commit) ->
-  console.log '----'
-  console.log commitLogs
-  console.log '----'
-
   firstLine = (s) ->
     s.split('\n')[0]
 

@@ -15,7 +15,7 @@
   remoteRepoGroup = 'deathcap';
 
   main = function() {
-    var commitLogs, cutCommit, cutCommits, file, linkedPaths, node_modules, numProjects, p1, p2, p3, projectName, stats, _i, _j, _len, _len1, _ref, _results;
+    var commitLogs, cutCommit, cutCommits, file, linkedPaths, newestCommits, node_modules, numProjects, p1, p2, p3, projectName, stats, _i, _j, _len, _len1, _ref, _results;
     cutCommits = getPackageJsonCommits();
     node_modules = path.join(root, 'node_modules');
     linkedPaths = [];
@@ -35,6 +35,7 @@
     console.log('numProjects', numProjects);
     console.log('linkedPaths', linkedPaths);
     commitLogs = {};
+    newestCommits = {};
     _results = [];
     for (_j = 0, _len1 = linkedPaths.length; _j < _len1; _j++) {
       file = linkedPaths[_j];
@@ -43,10 +44,11 @@
       if (cutCommit == null) {
         throw "node module " + projectName + " linked but not found in package.json!";
       }
-      _results.push(readRepo(commitLogs, cutCommit, projectName, file, numProjects, function(commitLogs) {
+      _results.push(readRepo(commitLogs, newestCommits, cutCommit, projectName, file, numProjects, function(commitLogs) {
         console.log("=======");
         console.log(commitLogs);
-        return console.log("=======");
+        console.log("=======");
+        return console.log(newestCommits);
       }));
     }
     return _results;
@@ -83,7 +85,7 @@
     return usedCommits;
   };
 
-  readRepo = function(commitLogs, cutCommit, projectName, gitPath, numProjects, callback) {
+  readRepo = function(commitLogs, newestCommits, cutCommit, projectName, gitPath, numProjects, callback) {
     var repo;
     repo = git.repo(path.join(gitPath, '.git'));
     commitLogs[projectName] = [];
@@ -95,6 +97,11 @@
       onRead = function(err, commit) {
         if (err) {
           throw err;
+        }
+        if (commit) {
+          if (newestCommits[projectName] == null) {
+            newestCommits[projectName] = commit.hash;
+          }
         }
         if (!commit || commit.hash === cutCommit) {
           if (Object.keys(commitLogs).length === numProjects) {
@@ -123,9 +130,6 @@
 
   logCommit = function(commitLogs, projectName, commit) {
     var firstLine, message;
-    console.log('----');
-    console.log(commitLogs);
-    console.log('----');
     firstLine = function(s) {
       return s.split('\n')[0];
     };
