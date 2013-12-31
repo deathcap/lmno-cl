@@ -4,11 +4,13 @@ path = require 'path'
 git = require 'git-node'
 
 root = '../voxpopuli'
+
+# your git repos are at git://<remoteGitHost>/<remoteRepoGroup>/<projectName>.git#<ref>
+remoteGitHost = 'github.com'
 remoteRepoGroup = 'deathcap'
 
 main = () ->
-  readPackageJson()
-  return
+  cutCommits = getPackageJsonCommits()
 
   node_modules = path.join(root, 'node_modules')
   linkedPaths = []
@@ -30,11 +32,17 @@ main = () ->
   for file in linkedPaths
     projectName = path.basename(file)
 
-    readRepo commitLogs, projectName, file, theEnd, (commitLogs) ->
+    cutCommit = cutCommits[projectName]
+    if !cutCommit?
+      throw "node module #{projectName} linked but not found in package.json!"
+
+    readRepo commitLogs, cutCommit, projectName, file, theEnd, (commitLogs) ->
       console.log commitLogs
 
 
-readPackageJson = () ->
+getPackageJsonCommits = () ->
+  usedCommits = {}
+
   packageJson = JSON.parse fs.readFileSync(path.join(root, 'package.json'))
   for depName, depVer of packageJson.dependencies
     isGit = depVer.indexOf('git://') == 0
@@ -43,12 +51,23 @@ readPackageJson = () ->
     isSpecific = depVer.indexOf('#') != -1
     continue if !isSpecific     # must be in git://foo#ref format. temporally consistent!
 
-    [repoPath, commitRef] = depVer.split('#')
+    [repoURL, commitRef] = depVer.split('#')
+    ourPrefix = "git://#{remoteGitHost}/#{remoteRepoGroup}/"
+    isOurRepo = repoURL.indexOf(ourPrefix) == 0
+    continue if !isOurRepo
 
-    console.log depName,repoPath,commitRef
+    projectName = repoURL.split('/')[4]
+    projectName = projectName.replace('.git', '')  # optional, but probably a good idea
+
+    if depName != projectName
+      throw "unexpected package.json entry: dependency name #{depName} != project name #{projectName} in #{depVer}, why?"
+
+    usedCommits[projectName] = commitRef
+
+  return usedCommits
 
 
-readRepo = (commitLogs, projectName, gitPath, theEnd, callback) ->
+readRepo = (commitLogs, cutCommit, projectName, gitPath, theEnd, callback) ->
   repo = git.repo path.join(gitPath, '.git')
 
   # see https://github.com/creationix/git-node/blob/master/examples/walk.js
@@ -57,11 +76,13 @@ readRepo = (commitLogs, projectName, gitPath, theEnd, callback) ->
 
     onRead = (err, commit) ->
       throw err if err
-      if !commit
+
+      if !commit or commit.hash == cutCommit
         # end of commits for this project
         if gitPath == theEnd
           callback(commitLogs)
         return
+
       logCommit(commitLogs, projectName, commit)
       repo.treeWalk commit.tree, (err, tree) ->
         throw err if err
