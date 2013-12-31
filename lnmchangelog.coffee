@@ -1,7 +1,7 @@
 
 fs = require 'fs'
 path = require 'path'
-git = require 'git'
+git = require 'git-node'
 
 root = '../voxpopuli'
 
@@ -18,8 +18,28 @@ for file in files
   p2 = fs.readlinkSync(p1)              # /usr/local/lib/node_modules link
   p3 = fs.readlinkSync(p2)              # final destination link
   
-  repo = new git.Git(p3)
+  repo = git.repo path.join(p3, '.git')
   console.log p3, repo
 
-  repo.rev_list {}, 'master', (err, result) ->
-    console.log err,result
+  repo.logWalk 'HEAD', (err, log) ->
+    throw err if err
+
+    onRead = (err, commit) ->
+      throw err if err
+      repo.treeWalk commit.tree, (err, tree) ->
+        throw err if err
+        onEntry = (err, entry) ->
+          throw err if err
+          log.read(onRead) if !entry
+          logEntry(entry)
+          return tree.read(onEntry)
+
+        tree.read(onEntry)
+
+    return log.read onRead
+
+  break
+
+logEntry = (entry) ->
+  return if not entry?
+  console.log entry.hash, entry.path

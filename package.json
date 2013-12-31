@@ -7,6 +7,7 @@
     "url": "git@github.com:deathcap/lnmchangelog.git"
   },
   "dependencies": {
-    "git": "~0.1.5"
+    "git": "~0.1.5",
+    "git-node": "~0.1.1"
   }
 }
