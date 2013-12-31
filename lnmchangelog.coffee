@@ -17,7 +17,8 @@ for file in files
 
   p2 = fs.readlinkSync(p1)              # /usr/local/lib/node_modules link
   p3 = fs.readlinkSync(p2)              # final destination link
-  
+ 
+  project = p3
   repo = git.repo path.join(p3, '.git')
   console.log p3, repo
 
@@ -28,7 +29,7 @@ for file in files
     onRead = (err, commit) ->
       throw err if err
       return if !commit
-      logCommit(commit)
+      logCommit(project, commit)
       repo.treeWalk commit.tree, (err, tree) ->
         throw err if err
         onEntry = (err, entry) ->
@@ -42,6 +43,8 @@ for file in files
 
   break
 
-logCommit = (commit) ->
-  console.log commit.hash, commit.author.name, commit.message
+logCommit = (project, commit) ->
+  console.log "#{project}@#{commit.hash} #{commit.author.name} #{firstLine commit.message}"
 
+firstLine = (s) ->
+  s.split('\n')[0]
