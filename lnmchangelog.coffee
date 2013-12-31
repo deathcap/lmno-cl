@@ -10,7 +10,8 @@ remoteGitHost = 'github.com'
 remoteRepoGroup = 'deathcap'
 
 main = () ->
-  cutCommits = getPackageJsonCommits()
+  rawPackageJson = fs.readFileSync(path.join(root, 'package.json'))
+  cutCommits = getPackageJsonCommits(rawPackageJson)
 
   node_modules = path.join(root, 'node_modules')
   linkedPaths = []
@@ -44,12 +45,37 @@ main = () ->
       console.log commitLogs
       console.log "======="
       console.log newestCommits
+      updatePackageJson(cutCommits, rawPackageJson.toString(), commitLogs, newestCommits)
+      msg = addCommitLog(commitLogs)
+      console.log "log=",msg
+
+updatePackageJson = (cutCommits, rawPackageJson, commitLogs, newestCommits) ->
+  for projectName, newestCommit of newestCommits
+    oldCommit = cutCommits[projectName]
+    # replace the package.json file textually so it is modified in-place, not rewritten
+    # hope there is not the same commit hash shared between multiple projects
+    rawPackageJson = rawPackageJson.replace(oldCommit, newestCommit)
+
+  console.log rawPackageJson
 
 
-getPackageJsonCommits = () ->
+addCommitLog = (commitLogs) ->
+  detail = ''
+  projectsUpdated = []
+  for projectName, logs of commitLogs
+    continue if logs.length == 0  # skip if nothing changed
+    projectsUpdated.push(projectName)
+
+    detail += logs.join('\n')
+    detail += '\n'
+
+  oneliner = 'Update ' + projectsUpdated.join(', ')
+  return oneliner + '\n\n' + detail
+
+getPackageJsonCommits = (rawPackageJson) ->
   usedCommits = {}
 
-  packageJson = JSON.parse fs.readFileSync(path.join(root, 'package.json'))
+  packageJson = JSON.parse rawPackageJson
   for depName, depVer of packageJson.dependencies
     isGit = depVer.indexOf('git://') == 0
     continue if !isGit
