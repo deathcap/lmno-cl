@@ -5,13 +5,16 @@ git = require 'git-node'
 
 root = '../voxpopuli'
 
-# your git repos are at git://<remoteGitHost>/<remoteRepoGroup>/<projectName>.git#<ref>
-remoteGitHost = 'github.com'
-remoteRepoGroup = 'deathcap'
-
 main = () ->
   rawPackageJson = fs.readFileSync(path.join(root, 'package.json'))
-  cutCommits = getPackageJsonCommits(rawPackageJson)
+
+  packageJson = JSON.parse rawPackageJson
+  depVers = getDepVers(packageJson)
+  [mostCommonHost, mostCommonGroup] = getCommonHostGroup(depVers)
+  if mostCommonHost != 'github.com'
+    print "warning: unknown git host #{mostCommonHost}, commit references may be incorrect"
+
+  cutCommits = getPackageJsonCommits(mostCommonHost, mostCommonGroup, depVers)
 
   node_modules = path.join(root, 'node_modules')
   linkedPaths = []
@@ -46,7 +49,9 @@ main = () ->
       console.log "======="
       console.log newestCommits
       updatePackageJson(cutCommits, rawPackageJson.toString(), commitLogs, newestCommits)
-      msg = addCommitLog(commitLogs)
+
+      logRepoGroup = mostCommonGroup # TODO: get from 'git remote -v' instead?
+      msg = addCommitLog(logRepoGroup, commitLogs)
       console.log "log=",msg
 
 updatePackageJson = (cutCommits, rawPackageJson, commitLogs, newestCommits) ->
@@ -59,23 +64,26 @@ updatePackageJson = (cutCommits, rawPackageJson, commitLogs, newestCommits) ->
   console.log rawPackageJson
 
 
-addCommitLog = (commitLogs) ->
+addCommitLog = (logRepoGroup, commitLogs) ->
   detail = ''
   projectsUpdated = []
+
+  firstLine = (s) ->
+    s.split('\n')[0]
+
   for projectName, logs of commitLogs
     continue if logs.length == 0  # skip if nothing changed
     projectsUpdated.push(projectName)
 
-    detail += logs.join('\n')
-    detail += '\n'
+    for [projectName, commit] in logs
+      messageLine = "#{logRepoGroup}/#{projectName}@#{commit.hash} #{firstLine commit.message}"
+      detail += messageLine + '\n'
 
   oneliner = 'Update ' + projectsUpdated.join(', ')
   return oneliner + '\n\n' + detail
 
-getPackageJsonCommits = (rawPackageJson) ->
-  usedCommits = {}
-
-  packageJson = JSON.parse rawPackageJson
+getDepVers = (packageJson) ->
+  depVers = {}
   for depName, depVer of packageJson.dependencies
     isGit = depVer.indexOf('git://') == 0
     continue if !isGit
@@ -83,8 +91,41 @@ getPackageJsonCommits = (rawPackageJson) ->
     isSpecific = depVer.indexOf('#') != -1
     continue if !isSpecific     # must be in git://foo#ref format. temporally consistent!
 
+    depVers[depName] = depVer
+  return depVers
+
+getCommonHostGroup = (depVers) ->
+  repoHostFreq = {}
+  repoGroupFreq = {}
+  for depName, depVer of depVers
+    [ignoredProtocol, ignoredBlank, repoHost, repoGroup, repoPath] = depVer.split('/')
+   
+    repoHostFreq[repoHost] ?= 0
+    repoHostFreq[repoHost] += 1
+
+    repoGroupFreq[repoGroup] ?= 0
+    repoGroupFreq[repoGroup] += 1
+
+  host = mostCommon repoHostFreq
+  group = mostCommon repoGroupFreq
+
+  [host, group]
+
+mostCommon = (obj) ->
+  maxFreq = 0
+  ret = undefined
+  for name, freq of obj
+    if freq > maxFreq
+      ret = name
+  return ret
+
+
+getPackageJsonCommits = (expectedHost, expectedGroup, depVers) ->
+  usedCommits = {}
+
+  for depName, depVer of depVers
     [repoURL, commitRef] = depVer.split('#')
-    ourPrefix = "git://#{remoteGitHost}/#{remoteRepoGroup}/"
+    ourPrefix = "git://#{expectedHost}/#{expectedGroup}/"  # assume most frequently specified host and group is ours; ignore others
     isOurRepo = repoURL.indexOf(ourPrefix) == 0
     continue if !isOurRepo
 
@@ -136,11 +177,7 @@ readRepo = (commitLogs, newestCommits, cutCommit, projectName, gitPath, numProje
 
 
 logCommit = (commitLogs, projectName, commit) ->
-  firstLine = (s) ->
-    s.split('\n')[0]
-
-  message = "#{remoteRepoGroup}/#{projectName}@#{commit.hash} #{firstLine commit.message}"
-  commitLogs[projectName].push(message)
+  commitLogs[projectName].push [projectName, commit]
 
 
 main()
