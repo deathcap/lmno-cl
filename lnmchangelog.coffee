@@ -7,6 +7,9 @@ root = '../voxpopuli'
 remoteRepoGroup = 'deathcap'
 
 main = () ->
+  readPackageJson()
+  return
+
   node_modules = path.join(root, 'node_modules')
   linkedPaths = []
 
@@ -29,6 +32,20 @@ main = () ->
 
     readRepo commitLogs, projectName, file, theEnd, (commitLogs) ->
       console.log commitLogs
+
+
+readPackageJson = () ->
+  packageJson = JSON.parse fs.readFileSync(path.join(root, 'package.json'))
+  for depName, depVer of packageJson.dependencies
+    isGit = depVer.indexOf('git://') == 0
+    continue if !isGit
+
+    isSpecific = depVer.indexOf('#') != -1
+    continue if !isSpecific     # must be in git://foo#ref format. temporally consistent!
+
+    [repoPath, commitRef] = depVer.split('#')
+
+    console.log depName,repoPath,commitRef
 
 
 readRepo = (commitLogs, projectName, gitPath, theEnd, callback) ->
@@ -61,11 +78,12 @@ readRepo = (commitLogs, projectName, gitPath, theEnd, callback) ->
 logCommit = (commitLogs, projectName, commit) ->
   commitLogs[projectName] ?= []
 
+  firstLine = (s) ->
+    s.split('\n')[0]
+
   message = "#{remoteRepoGroup}/#{projectName}@#{commit.hash} #{firstLine commit.message}"
   commitLogs[projectName].push(message)
 
-firstLine = (s) ->
-  s.split('\n')[0]
 
 main()
 
