@@ -63,7 +63,7 @@
       isLast = fileNum === linkedPaths.length - 1;
       _results.push(readRepo(commitLogs, newestCommits, cutCommit, projectName, file, isLast, function(commitLogs) {
         var cmd, escaped, logRepoGroup, msg;
-        updatePackageJson(cutCommits, rawPackageJson.toString(), commitLogs, newestCommits);
+        updatePackageJson(cutCommits, projectName2DepName, rawPackageJson.toString(), commitLogs, newestCommits);
         logRepoGroup = mostCommonGroup;
         msg = addCommitLog(logRepoGroup, commitLogs);
         cmd = ['git', 'commit', 'package.json', '-m', msg];
@@ -77,11 +77,15 @@
     return _results;
   };
 
-  updatePackageJson = function(cutCommits, rawPackageJson, commitLogs, newestCommits) {
-    var newestCommit, oldCommit, projectName;
+  updatePackageJson = function(cutCommits, projectName2DepName, rawPackageJson, commitLogs, newestCommits) {
+    var depName, newestCommit, oldCommit, projectName;
     for (projectName in newestCommits) {
       newestCommit = newestCommits[projectName];
-      oldCommit = cutCommits[projectName];
+      depName = projectName2DepName[projectName];
+      if (depName == null) {
+        depName = projectName;
+      }
+      oldCommit = cutCommits[depName];
       rawPackageJson = rawPackageJson.replace(oldCommit, newestCommit);
     }
     if (logVerbose) {
@@ -183,7 +187,7 @@
       projectName = repoURL.split('/')[4];
       projectName = projectName.replace('.git', '');
       if (depName !== projectName) {
-        process.stderr.write("# WARNING: unexpected package.json entry: dependency name " + depName + " != project name " + projectName + " in " + depVer + ", why? (using dependency name " + depName + ")\n");
+        process.stderr.write("# WARNING: unexpected package.json entry: dependency name " + depName + " != project name " + projectName + " in " + depVer + ", why? (using dependency name " + depName + "n");
         projectName2DepName[projectName] = depName;
       }
       usedCommits[depName] = commitRef;

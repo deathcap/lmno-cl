@@ -63,7 +63,7 @@ main = () ->
       #console.log commitLogs
       #console.log "======="
       #console.log newestCommits
-      updatePackageJson(cutCommits, rawPackageJson.toString(), commitLogs, newestCommits)
+      updatePackageJson(cutCommits, projectName2DepName, rawPackageJson.toString(), commitLogs, newestCommits)
 
       logRepoGroup = mostCommonGroup # TODO: get from 'git remote -v' instead?
       msg = addCommitLog(logRepoGroup, commitLogs)
@@ -75,9 +75,12 @@ main = () ->
       if logVerbose
         process.stderr.write escaped + '\n'
 
-updatePackageJson = (cutCommits, rawPackageJson, commitLogs, newestCommits) ->
+updatePackageJson = (cutCommits, projectName2DepName, rawPackageJson, commitLogs, newestCommits) ->
   for projectName, newestCommit of newestCommits
-    oldCommit = cutCommits[projectName]
+    depName = projectName2DepName[projectName]
+    depName ?= projectName
+
+    oldCommit = cutCommits[depName]
     # replace the package.json file textually so it is modified in-place, not rewritten
     # hope there is not the same commit hash shared between multiple projects
     rawPackageJson = rawPackageJson.replace(oldCommit, newestCommit)
@@ -158,7 +161,7 @@ getPackageJsonCommits = (expectedHost, expectedGroup, depVers) ->
     projectName = projectName.replace('.git', '')  # optional, but probably a good idea
 
     if depName != projectName
-      process.stderr.write "# WARNING: unexpected package.json entry: dependency name #{depName} != project name #{projectName} in #{depVer}, why? (using dependency name #{depName})\n"
+      process.stderr.write "# WARNING: unexpected package.json entry: dependency name #{depName} != project name #{projectName} in #{depVer}, why? (using dependency name #{depName}n"
       projectName2DepName[projectName] = depName
 
     usedCommits[depName] = commitRef
