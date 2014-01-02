@@ -48,7 +48,8 @@ main = () ->
 
     cutCommit = cutCommits[projectName]
     if !cutCommit?
-      throw "node module #{projectName} linked but not found in package.json!"
+      process.stderr.write "# WARNING: node module #{projectName} linked but not found in package.json! (ignoring)\n"
+      continue
 
     isLast = fileNum == linkedPaths.length - 1
 
@@ -149,9 +150,9 @@ getPackageJsonCommits = (expectedHost, expectedGroup, depVers) ->
     projectName = projectName.replace('.git', '')  # optional, but probably a good idea
 
     if depName != projectName
-      throw "unexpected package.json entry: dependency name #{depName} != project name #{projectName} in #{depVer}, why?"
+      process.stderr.write "# WARNING: unexpected package.json entry: dependency name #{depName} != project name #{projectName} in #{depVer}, why? (using dependency name #{depName})\n"
 
-    usedCommits[projectName] = commitRef
+    usedCommits[depName] = commitRef
 
   return usedCommits
 

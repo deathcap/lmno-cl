@@ -53,7 +53,8 @@
       projectName = path.basename(file);
       cutCommit = cutCommits[projectName];
       if (cutCommit == null) {
-        throw "node module " + projectName + " linked but not found in package.json!";
+        process.stderr.write("# WARNING: node module " + projectName + " linked but not found in package.json! (ignoring)\n");
+        continue;
       }
       isLast = fileNum === linkedPaths.length - 1;
       _results.push(readRepo(commitLogs, newestCommits, cutCommit, projectName, file, isLast, function(commitLogs) {
@@ -174,9 +175,9 @@
       projectName = repoURL.split('/')[4];
       projectName = projectName.replace('.git', '');
       if (depName !== projectName) {
-        throw "unexpected package.json entry: dependency name " + depName + " != project name " + projectName + " in " + depVer + ", why?";
+        process.stderr.write("# WARNING: unexpected package.json entry: dependency name " + depName + " != project name " + projectName + " in " + depVer + ", why? (using dependency name " + depName + ")\n");
       }
-      usedCommits[projectName] = commitRef;
+      usedCommits[depName] = commitRef;
     }
     return usedCommits;
   };
