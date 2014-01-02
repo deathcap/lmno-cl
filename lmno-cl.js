@@ -79,7 +79,7 @@
       rawPackageJson = rawPackageJson.replace(oldCommit, newestCommit);
     }
     if (logVerbose) {
-      console.log(rawPackageJson);
+      process.stderr.write(rawPackageJson + '\n');
     }
     if (!dryRun) {
       return fs.writeFileSync('package.json', rawPackageJson);

@@ -78,7 +78,7 @@ updatePackageJson = (cutCommits, rawPackageJson, commitLogs, newestCommits) ->
     rawPackageJson = rawPackageJson.replace(oldCommit, newestCommit)
 
   if logVerbose
-    console.log rawPackageJson
+    process.stderr.write rawPackageJson + '\n'
   if not dryRun
     fs.writeFileSync 'package.json', rawPackageJson
 
