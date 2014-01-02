@@ -72,6 +72,8 @@ main = () ->
       cmd = ['git', 'commit', 'package.json', '-m', msg]
       escaped = shellescape(cmd)
       console.log escaped
+      if logVerbose
+        process.stderr.write escaped + '\n'
 
 updatePackageJson = (cutCommits, rawPackageJson, commitLogs, newestCommits) ->
   for projectName, newestCommit of newestCommits

@@ -69,7 +69,10 @@
         msg = addCommitLog(logRepoGroup, commitLogs);
         cmd = ['git', 'commit', 'package.json', '-m', msg];
         escaped = shellescape(cmd);
-        return console.log(escaped);
+        console.log(escaped);
+        if (logVerbose) {
+          return process.stderr.write(escaped + '\n');
+        }
       }));
     }
     return _results;
