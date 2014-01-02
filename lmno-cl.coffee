@@ -21,7 +21,7 @@ main = () ->
     console.log packageJson
     console.log "\nNo github.com URL dependencies found!"
 
-  cutCommits = getPackageJsonCommits(mostCommonHost, mostCommonGroup, depVers)
+  [cutCommits, projectName2DepName] = getPackageJsonCommits(mostCommonHost, mostCommonGroup, depVers)
 
   node_modules = path.join(root, 'node_modules')
   linkedPaths = []
@@ -46,7 +46,9 @@ main = () ->
   for file, fileNum in linkedPaths
     projectName = path.basename(file)
 
-    cutCommit = cutCommits[projectName]
+    depName = projectName2DepName[projectName]
+
+    cutCommit = cutCommits[depName]
     if !cutCommit?
       process.stderr.write "# WARNING: node module #{projectName} linked but not found in package.json! (ignoring)\n"
       continue
@@ -139,6 +141,7 @@ mostCommon = (obj) ->
 
 getPackageJsonCommits = (expectedHost, expectedGroup, depVers) ->
   usedCommits = {}
+  projectName2DepName = {}
 
   for depName, depVer of depVers
     [repoURL, commitRef] = depVer.split('#')
@@ -151,10 +154,11 @@ getPackageJsonCommits = (expectedHost, expectedGroup, depVers) ->
 
     if depName != projectName
       process.stderr.write "# WARNING: unexpected package.json entry: dependency name #{depName} != project name #{projectName} in #{depVer}, why? (using dependency name #{depName})\n"
+      projectName2DepName[projectName] = depName
 
     usedCommits[depName] = commitRef
 
-  return usedCommits
+  return [usedCommits, projectName2DepName]
 
 
 readRepo = (commitLogs, newestCommits, cutCommit, projectName, gitPath, isLast, callback) ->
