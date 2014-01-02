@@ -59,7 +59,6 @@
       cutCommit = cutCommits[depName];
       if (cutCommit == null) {
         process.stderr.write("# WARNING: node module " + projectName + " linked but not found in package.json! (ignoring)\n");
-        continue;
       }
       isLast = fileNum === linkedPaths.length - 1;
       _results.push(readRepo(commitLogs, newestCommits, cutCommit, projectName, file, isLast, function(commitLogs) {

@@ -54,7 +54,7 @@ main = () ->
     cutCommit = cutCommits[depName]
     if !cutCommit?
       process.stderr.write "# WARNING: node module #{projectName} linked but not found in package.json! (ignoring)\n"
-      continue
+      #continue   # can't, because isLast depends on order
 
     isLast = fileNum == linkedPaths.length - 1
 
