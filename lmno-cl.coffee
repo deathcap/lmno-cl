@@ -43,6 +43,7 @@ main = () ->
   #console.log 'linkedPaths',linkedPaths
   commitLogs = {}
   newestCommits = {}
+  depIsIgnored = {}
   for file, fileNum in linkedPaths
     projectName = path.basename(file)
 
@@ -55,6 +56,7 @@ main = () ->
     if !cutCommit?
       process.stderr.write "# WARNING: node module #{projectName} linked but not found in package.json! (ignoring)\n"
       #continue   # can't, because isLast depends on order
+      depIsIgnored[depName] = true
 
     isLast = fileNum == linkedPaths.length - 1
 
@@ -63,10 +65,10 @@ main = () ->
       #console.log commitLogs
       #console.log "======="
       #console.log newestCommits
-      updatePackageJson(cutCommits, projectName2DepName, rawPackageJson.toString(), commitLogs, newestCommits)
+      updatePackageJson(cutCommits, projectName2DepName, depIsIgnored, rawPackageJson.toString(), commitLogs, newestCommits)
 
       logRepoGroup = mostCommonGroup # TODO: get from 'git remote -v' instead?
-      msg = addCommitLog(logRepoGroup, commitLogs)
+      msg = addCommitLog(logRepoGroup, commitLogs, projectName2DepName, depIsIgnored)
 
       # run this through: git commit package.json -F -
       cmd = ['git', 'commit', 'package.json', '-m', msg]
@@ -75,7 +77,7 @@ main = () ->
       if logVerbose
         process.stderr.write escaped + '\n'
 
-updatePackageJson = (cutCommits, projectName2DepName, rawPackageJson, commitLogs, newestCommits) ->
+updatePackageJson = (cutCommits, projectName2DepName, depIsIgnored, rawPackageJson, commitLogs, newestCommits) ->
   for projectName, newestCommit of newestCommits
     depName = projectName2DepName[projectName]
     depName ?= projectName
@@ -83,7 +85,7 @@ updatePackageJson = (cutCommits, projectName2DepName, rawPackageJson, commitLogs
     oldCommit = cutCommits[depName]
     # replace the package.json file textually so it is modified in-place, not rewritten
     # hope there is not the same commit hash shared between multiple projects
-    rawPackageJson = rawPackageJson.replace(oldCommit, newestCommit)
+    rawPackageJson = rawPackageJson.replace(oldCommit, newestCommit) unless depIsIgnored[depName]
 
   if logVerbose
     process.stderr.write rawPackageJson + '\n'
@@ -91,7 +93,7 @@ updatePackageJson = (cutCommits, projectName2DepName, rawPackageJson, commitLogs
     fs.writeFileSync 'package.json', rawPackageJson
 
 
-addCommitLog = (logRepoGroup, commitLogs) ->
+addCommitLog = (logRepoGroup, commitLogs, projectName2DepName, depIsIgnored) ->
   detail = ''
   projectsUpdated = []
 
@@ -100,6 +102,10 @@ addCommitLog = (logRepoGroup, commitLogs) ->
 
   for projectName, logs of commitLogs
     continue if logs.length == 0  # skip if nothing changed
+    depName = projectName2DepName[projectName]
+    depName ?= projectName
+    continue if depIsIgnored[depName]
+
     projectsUpdated.push(projectName)
 
     for [projectName, commit] in logs
