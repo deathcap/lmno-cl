@@ -52,6 +52,10 @@
       file = linkedPaths[fileNum];
       projectName = path.basename(file);
       depName = projectName2DepName[projectName];
+      if (depName == null) {
+        depName = projectName;
+      }
+      process.stderr.write('found ' + depName + '\n');
       cutCommit = cutCommits[depName];
       if (cutCommit == null) {
         process.stderr.write("# WARNING: node module " + projectName + " linked but not found in package.json! (ignoring)\n");

@@ -47,6 +47,9 @@ main = () ->
     projectName = path.basename(file)
 
     depName = projectName2DepName[projectName]
+    depName ?= projectName  # if not linked
+
+    process.stderr.write 'found '+depName+'\n'
 
     cutCommit = cutCommits[depName]
     if !cutCommit?
