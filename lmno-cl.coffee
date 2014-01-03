@@ -44,7 +44,10 @@ main = () ->
   commitLogs = {}
   newestCommits = {}
   depIsIgnored = {}
-  for file, fileNum in linkedPaths
+
+  # for file, fileNum in linkedPaths
+  readProject = (fileNum) ->
+    file = linkedPaths[fileNum]
     projectName = path.basename(file)
 
     depName = projectName2DepName[projectName]
@@ -60,7 +63,10 @@ main = () ->
 
     isLast = fileNum == linkedPaths.length - 1
 
-    readRepo commitLogs, newestCommits, cutCommit, projectName, file, isLast, (commitLogs) ->
+    readRepo commitLogs, newestCommits, cutCommit, projectName, file, (commitLogs) ->
+      if not isLast
+        return readProject(fileNum + 1)
+
       #console.log "======="
       #console.log commitLogs
       #console.log "======="
@@ -76,6 +82,8 @@ main = () ->
       console.log escaped
       if logVerbose
         process.stderr.write escaped + '\n'
+
+  readProject(0)
 
 updatePackageJson = (cutCommits, projectName2DepName, depIsIgnored, rawPackageJson, commitLogs, newestCommits) ->
   for projectName, newestCommit of newestCommits
@@ -107,9 +115,6 @@ addCommitLog = (logRepoGroup, commitLogs, projectName2DepName, depIsIgnored) ->
     continue if depIsIgnored[depName]
 
     projectsUpdated.push(projectName)
-
-
-    console.log "XXXXXXXX ",projectName,logs.length
 
     for [projectName, commit] in logs
       messageLine = "#{logRepoGroup}/#{projectName}@#{commit.hash} #{firstLine commit.message}"
@@ -178,7 +183,7 @@ getPackageJsonCommits = (expectedHost, expectedGroup, depVers) ->
   return [usedCommits, projectName2DepName]
 
 
-readRepo = (commitLogs, newestCommits, cutCommit, projectName, gitPath, isLast, callback) ->
+readRepo = (commitLogs, newestCommits, cutCommit, projectName, gitPath, callback) ->
   repo = git.repo path.join(gitPath, '.git')
 
   commitLogs[projectName] = []
@@ -186,25 +191,18 @@ readRepo = (commitLogs, newestCommits, cutCommit, projectName, gitPath, isLast, 
   repo.logWalk 'HEAD', (err, log) ->
     throw err if err
 
+    shallow = false
+
     onRead = (err, commit) ->
       throw err if err
 
       if commit
         newestCommits[projectName] ?= commit.hash
 
-      console.log 'COMMIT ',projectName,commit.hash,commit.message, commitLogs[projectName].length
-      if projectName == 'inventory-window'
-        console.log '*************'
-        console.log commitLogs[projectName]
-        console.log '*************'
-
       if !commit or commit.hash == cutCommit
-        console.log 'CUT AT ',projectName,commit.hash
         # end of commits for this project
         
-        # last project, commit logs all completed, so can continue processing
-        if isLast
-          callback(commitLogs)
+        callback(commitLogs)
         return
 
       logCommit(commitLogs, projectName, commit)
