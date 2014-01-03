@@ -120,6 +120,7 @@
         continue;
       }
       projectsUpdated.push(projectName);
+      console.log("XXXXXXXX ", projectName, logs.length);
       for (_i = 0, _len = logs.length; _i < _len; _i++) {
         _ref = logs[_i], projectName = _ref[0], commit = _ref[1];
         messageLine = "" + logRepoGroup + "/" + projectName + "@" + commit.hash + " " + (firstLine(commit.message));
@@ -224,7 +225,14 @@
             newestCommits[projectName] = commit.hash;
           }
         }
+        console.log('COMMIT ', projectName, commit.hash, commit.message, commitLogs[projectName].length);
+        if (projectName === 'inventory-window') {
+          console.log('*************');
+          console.log(commitLogs[projectName]);
+          console.log('*************');
+        }
         if (!commit || commit.hash === cutCommit) {
+          console.log('CUT AT ', projectName, commit.hash);
           if (isLast) {
             callback(commitLogs);
           }

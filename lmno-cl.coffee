@@ -108,6 +108,9 @@ addCommitLog = (logRepoGroup, commitLogs, projectName2DepName, depIsIgnored) ->
 
     projectsUpdated.push(projectName)
 
+
+    console.log "XXXXXXXX ",projectName,logs.length
+
     for [projectName, commit] in logs
       messageLine = "#{logRepoGroup}/#{projectName}@#{commit.hash} #{firstLine commit.message}"
       detail += messageLine + '\n'
@@ -189,7 +192,14 @@ readRepo = (commitLogs, newestCommits, cutCommit, projectName, gitPath, isLast, 
       if commit
         newestCommits[projectName] ?= commit.hash
 
+      console.log 'COMMIT ',projectName,commit.hash,commit.message, commitLogs[projectName].length
+      if projectName == 'inventory-window'
+        console.log '*************'
+        console.log commitLogs[projectName]
+        console.log '*************'
+
       if !commit or commit.hash == cutCommit
+        console.log 'CUT AT ',projectName,commit.hash
         # end of commits for this project
         
         # last project, commit logs all completed, so can continue processing
