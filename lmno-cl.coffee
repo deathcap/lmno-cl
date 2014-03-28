@@ -117,7 +117,9 @@ addCommitLog = (logRepoGroup, commitLogs, projectName2DepName, depIsIgnored) ->
     projectsUpdated.push(projectName)
 
     for [projectName, commit] in logs
-      messageLine = "#{logRepoGroup}/#{projectName}@#{commit.hash} #{firstLine commit.message}"
+      commitMessage = commit.message.replace /GH-(\d+)/g, "#{logRepoGroup}/#{projectName}#$1"
+
+      messageLine = "#{logRepoGroup}/#{projectName}@#{commit.hash} #{firstLine commitMessage}"
       detail += messageLine + '\n'
 
   oneliner = 'Update ' + projectsUpdated.join(', ')
