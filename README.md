@@ -48,7 +48,7 @@ Of course you can also omit "| sh" if you want to manually commit.
 ## See also
 
 * [Check in node\_modules vs. shrinkwrap](http://stackoverflow.com/questions/11459733/check-in-node-modules-vs-shrinkwrap)
-* [node\_modules in git](http://www.futurealoof.com/posts/nodemodules-in-git.html)
+* [node\_modules in git](https://web.archive.org/http://www.futurealoof.com/posts/nodemodules-in-git.html)
 
 ## Acronym
 
