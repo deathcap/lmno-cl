@@ -104,7 +104,7 @@
   };
 
   addCommitLog = function(logRepoGroup, commitLogs, projectName2DepName, depIsIgnored) {
-    var commit, depName, detail, firstLine, logs, messageLine, oneliner, projectName, projectsUpdated, _i, _len, _ref;
+    var commit, commitMessage, depName, detail, firstLine, logs, messageLine, oneliner, projectName, projectsUpdated, _i, _len, _ref;
     detail = '';
     projectsUpdated = [];
     firstLine = function(s) {
@@ -125,7 +125,8 @@
       projectsUpdated.push(projectName);
       for (_i = 0, _len = logs.length; _i < _len; _i++) {
         _ref = logs[_i], projectName = _ref[0], commit = _ref[1];
-        messageLine = "" + logRepoGroup + "/" + projectName + "@" + commit.hash + " " + (firstLine(commit.message));
+        commitMessage = commit.message.replace(/GH-(\d+)/g, "" + logRepoGroup + "/" + projectName + "#$1");
+        messageLine = "" + logRepoGroup + "/" + projectName + "@" + commit.hash + " " + (firstLine(commitMessage));
         detail += messageLine + '\n';
       }
     }
